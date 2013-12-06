@@ -39,14 +39,13 @@
 
             #endregion
 
-            var crc = new CRC32();
-            var hash = BitConverter.GetBytes(crc.Compute(partitions.ToArray())); // Calculate the CRC32 for the Partition entry array
+            var hash = BitConverter.GetBytes(CRC32.Compute(partitions.ToArray())); // Calculate the CRC32 for the Partition entry array
             Array.Copy(hash, 0, gptheader, 0x58, hash.Length); // Copy the CRC32 to the return value
 
             var wholegpt = new List<byte>();
             wholegpt.AddRange(gptheader);
             wholegpt.AddRange(partitions);
-            hash = BitConverter.GetBytes(crc.Compute(wholegpt.ToArray())); // Calculate the CRC32 for the entire GPT
+            hash = BitConverter.GetBytes(CRC32.Compute(wholegpt.ToArray(), 0x5c)); // Calculate the CRC32 for the GPT Header
             Array.Copy(hash, 0, gptheader, 0x10, hash.Length);
             wholegpt.Clear();
             wholegpt.AddRange(mbr);

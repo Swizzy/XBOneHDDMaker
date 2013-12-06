@@ -1,44 +1,33 @@
 ﻿namespace XBOneHDDMaker
 {
     using System;
-    using System.Collections.Generic;
-    using System.IO;
-    using System.Security.Cryptography;
 
     internal sealed class CRC32
     {
-        private readonly UInt32[] _mTable;
+        private static UInt32[] _table = null;
 
-        public CRC32()
+        private static void MakeTable()
         {
-            _mTable = InitializeTable(0xedb88320);
-        }
-
-        public UInt32 Compute(byte[] buffer)
-        {
-            return ~CalculateHash(_mTable, 0xffffffff, buffer, 0, buffer.Length);
-        }
-
-        private UInt32[] InitializeTable(UInt32 polynomial)
-        {
-            var createTable = new UInt32[256];
+            _table = new UInt32[256];
             for (UInt32 i = 0; i < 256; i++)
             {
-                UInt32 entry = i;
-                for (int j = 8; j > 0; j--) {
-                    entry = (entry & 1) > 0 ? ((entry >> 1) ^ polynomial) : (entry >> 1);
-                }
-                createTable[i] = entry;
+                var c = i;
+                for (var j = 0; j < 8; j++)
+                    c = (c & 1) > 0 ? (0xEDB88320 ^ (c >> 1)) : (c >> 1);
+                _table[i] = c;
             }
-            return createTable;
         }
 
-        private UInt32 CalculateHash(UInt32[] table, UInt32 seed, IList<byte> buffer, int start, int size)
+        public static UInt32 Compute(byte[] buffer, int length = 0)
         {
-            var crc = seed;
-            for (var i = start; i < size; i++)            
-                crc = (crc << 8) ^ table[(crc >> 24) ^ buffer[i]];
-            return crc;
+            if (_table == null)
+                MakeTable();
+            if (length == 0)
+                length = buffer.Length;
+            var c = 0xFFFFFFFF;
+            for (var i = 0; i < length; i++)
+                c = _table[(c ^ buffer[i]) & 0xFF] ^ (c >> 8);
+            return c ^ 0xFFFFFFFF;
         }
     }
 }
