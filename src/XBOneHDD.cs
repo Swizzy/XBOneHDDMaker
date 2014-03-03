@@ -10,19 +10,19 @@
         {
             var totalsectors = (devicesize / 0x200) - 34; // Get sector count (34 sectors for MBR + GPT i guess? dunno!)
             devicesize -= 107374182400; // Subract all the static partitions
-            devicesize -= 106972160; // To make it match the one made in linux...
+            devicesize -= 106972160; // To make it match the one made in linux (and retail HDD)
                  
-            var mbr = MakeMBRHeader(totalsectors); // Create a MBR...
+            var mbr = MakeMBRHeader(); // Create a MBR...
 
-            gptheader = ((List<byte>)MakeGPTHeader(totalsectors, totalsectors - 33)).ToArray(); // Don't ask why i subtract another 33 sectors... it's the only way to make it match...            
+            gptheader = ((List<byte>)MakeGPTHeader(totalsectors, totalsectors - 0x42)).ToArray(); // Account for backup sectors (twice?!)            
 
             var partitions = new List<byte>();
 
             #region Partitions
 
             //Now we add Temp Content...
-            partitions.AddRange(MakeGPTEntry(0x800, 0x52007ff, new byte[] { 0xA5, 0x7D, 0x72, 0xB3, 0xAC, 0xA3, 0x3D, 0x4B, 0x9F, 0xD6, 0x2E, 0xA5, 0x44, 0x41, 0x01, 0x1B }, "Temp Content"));
-            ulong currentsector = 0x5200800;
+            partitions.AddRange(MakeGPTEntry(0x800, 0x51fffff, new byte[] { 0xA5, 0x7D, 0x72, 0xB3, 0xAC, 0xA3, 0x3D, 0x4B, 0x9F, 0xD6, 0x2E, 0xA5, 0x44, 0x41, 0x01, 0x1B }, "Temp Content"));
+            ulong currentsector = 0x5200000;
             //Now we add User Content... 
             partitions.AddRange(MakeGPTEntry(currentsector, currentsector + (devicesize / 0x200), new byte[] { 0xE0, 0xB5, 0x9B, 0x86, 0x56, 0x33, 0xE6, 0x4B, 0x85, 0xF7, 0x29, 0x32, 0x3A, 0x67, 0x5C, 0xC7 }, "User Content"));
             currentsector += devicesize / 0x200;
@@ -54,21 +54,20 @@
             return wholegpt.ToArray();
         }
 
-        private static IEnumerable<byte> MakeMBRHeader(ulong totalsectors)
+        private static IEnumerable<byte> MakeMBRHeader()
         {
             var ret = new List<byte>();
-            ret.AddRange(new byte[0x1B8]); // Padding (ussually contains bootcode)
-            ret.AddRange(new byte[] { 0x2B, 0x7D, 0xA1, 0x6A, 0x00, 0x00 }); // Dunno, don't ask!
+            ret.AddRange(new byte[0x1BE]); // Padding (ussually contains bootcode)
             ret.Add(0x00); // Boot indicator
             ret.Add(0x00); // Starting Head
-            ret.Add(0x01); // Starting Sector
+            ret.Add(0x02); // Starting Sector // Linux makes this 0x01
             ret.Add(0x00); // Starting Cylinder
             ret.Add(0xEE); // System ID
-            ret.Add(0xFE); // Ending Head (0xFF according to http://technet.microsoft.com/en-us/library/cc739412 )
+            ret.Add(0xFF); // Ending Head
             ret.Add(0xFF); // Ending Sector
             ret.Add(0xFF); // Ending Cylinder
             ret.AddRange(new byte[] { 0x01, 0x00, 0x00, 0x00 }); // Starting LBA
-            ret.AddRange(BitConverter.GetBytes((uint)totalsectors)); // Size in LBA
+            ret.AddRange(new byte[] { 0xFF, 0xFF, 0xFF, 0xFF }); // Size (LBA) should always be 0xFF....
             ret.AddRange(new byte[0x30]); // Padding
             ret.AddRange(new byte[] { 0x55, 0xAA }); // End bytes
             return ret;

@@ -37,7 +37,8 @@ namespace XBOneHDDMaker
             if (sfd.ShowDialog() != DialogResult.OK)
                 return;
             byte[] header;
-            File.WriteAllBytes(sfd.FileName, XBOneHDD.MakeTable(805413339648, out header));
+            //File.WriteAllBytes(sfd.FileName, XBOneHDD.MakeTable(805413339648, out header));
+            File.WriteAllBytes(sfd.FileName, XBOneHDD.MakeTable(500107862016, out header));
             if (sfd.ShowDialog() == DialogResult.OK)
                 File.WriteAllBytes(sfd.FileName, header);
         }

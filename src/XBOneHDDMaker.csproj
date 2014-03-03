@@ -51,6 +51,7 @@
     <Compile Include="NativeWin32.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SettingsManager.cs" />
     <Compile Include="Utils.cs" />
     <Compile Include="WMI.cs" />
     <Compile Include="XBOneHDD.cs" />
